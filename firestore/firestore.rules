@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /agencies/{agencyId} {
+      function isMember() {
+        return request.auth != null &&
+          exists(/databases/$(database)/documents/agencies/$(agencyId)/members/$(request.auth.uid));
+      }
+
+      allow read: if isMember();
+      allow write: if isMember();
+
+      match /tokenVault/{connectionId} {
+        allow read, write: if false;
+      }
+
+      match /members/{memberId} {
+        allow read, write: if isMember();
+      }
+
+      match /clients/{clientId} {
+        allow read, write: if isMember();
+
+        match /connections/{connectionId} {
+          allow read, write: if isMember();
+        }
+
+        match /assets/{assetId} {
+          allow read, write: if isMember();
+        }
+
+        match /posts/{postId} {
+          allow read, write: if isMember();
+
+          match /variants/{variantId} {
+            allow read, write: if isMember();
+          }
+
+          match /comments/{commentId} {
+            allow read, write: if isMember();
+          }
+
+          match /schedules/{scheduleId} {
+            allow read, write: if isMember();
+          }
+
+          match /logs/{logId} {
+            allow read, write: if isMember();
+          }
+        }
+      }
+    }
+  }
+}
